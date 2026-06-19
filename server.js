@@ -14,8 +14,23 @@ const app = express();
 // Connect to DB
 connectDB();
 
+// Allowed origins — production Vercel URL + local dev
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+].filter(Boolean);
+
 // Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS policy: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
