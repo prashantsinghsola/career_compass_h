@@ -14,12 +14,17 @@ const app = express();
 // Connect to DB
 connectDB();
 
-// Allowed origins — production Vercel URL + local dev
+// Allowed origins — hardcoded production + env var + local dev
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  'https://careercompasswithai.vercel.app',   // production (always allowed)
+  ...(process.env.FRONTEND_URL               // support comma-separated URLs in env
+    ? process.env.FRONTEND_URL.split(',').map(u => u.trim())
+    : []),
   'http://localhost:3000',
   'http://127.0.0.1:3000',
 ].filter(Boolean);
+
+console.log('✅ CORS allowed origins:', allowedOrigins);
 
 // Middleware
 app.use(cors({
@@ -27,6 +32,7 @@ app.use(cors({
     // Allow requests with no origin (e.g., mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.warn(`🚫 CORS blocked origin: ${origin}`);
     callback(new Error(`CORS policy: origin ${origin} not allowed`));
   },
   credentials: true,
